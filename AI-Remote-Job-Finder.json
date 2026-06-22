@@ -1,0 +1,282 @@
+{
+  "name": "AI-Remote-Job-Finder",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "74793e38-0a10-4066-a2f1-fe7976047955",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "url": "https://remotive.com/api/remote-jobs",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        208,
+        288
+      ],
+      "id": "3bb1a5c9-646f-4956-a4a4-e18bab15d6dc",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const jobs = $input.first().json.jobs;\n\nreturn jobs\n.filter(job => {\n  const title = (job.title || \"\").toLowerCase();\n\n  // Fresher-friendly roles\n  const relevant =\n    title.includes(\"data analyst\") ||\n    title.includes(\"business analyst\") ||\n    title.includes(\"reporting analyst\") ||\n    title.includes(\"python developer\") ||\n    title.includes(\"software engineer\") ||\n    title.includes(\"software developer\") ||\n    title.includes(\"associate software engineer\") ||\n    title.includes(\"associate engineer\") ||\n    title.includes(\"junior developer\") ||\n    title.includes(\"graduate engineer\") ||\n    title.includes(\"qa engineer\") ||\n    title.includes(\"test engineer\") ||\n    title.includes(\"automation engineer\") ||\n    title.includes(\"technical support\") ||\n    title.includes(\"it support\") ||\n    title.includes(\"power bi\") ||\n    title.includes(\"data engineer\") ||\n    title.includes(\"ai intern\") ||\n    title.includes(\"machine learning intern\") ||\n    title.includes(\"data analyst intern\") ||\n    title.includes(\"software engineer intern\") ||\n    title.includes(\"software developer intern\") ||\n    title.includes(\"python intern\") ||\n    title.includes(\"data science intern\") ||\n    title.includes(\"ai agent\") ||\n    title.includes(\"ai automation\") ||\n    title.includes(\"prompt engineer\");\n\n  // Exclude senior roles\n  const senior =\n    title.includes(\"senior\") ||\n    title.includes(\"lead\") ||\n    title.includes(\"manager\") ||\n    title.includes(\"staff\") ||\n    title.includes(\"principal\") ||\n    title.includes(\"director\") ||\n    title.includes(\"architect\");\n\n  return relevant && !senior;\n})\n\n// Reduce AI Agent load\n.slice(0, 10)\n\n.map(job => ({\n  json: job\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "b0cee5f8-dedc-4741-93c2-04808a078589",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "4a7e0da0-fe0b-4417-aa0e-431a7ea1e714",
+              "leftValue": "",
+              "rightValue": ">=70",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1232,
+        -128
+      ],
+      "id": "994d964e-3d1f-4057-93a4-b1689380cbb2",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a career assistant.\n\nCandidate Profile:\n- Fresher (2025 Graduate)\n- B.Tech Computer Science\n- Location: India\n- Languages: English, Telugu\n- Skills: Python, SQL, Pandas, NumPy, Power BI, Machine Learning\n- Looking for: Remote jobs, internships, entry-level roles\n\nJob Title:\n{{$json.title}}\n\nCompany:\n{{$json.company_name}}\n\nLocation:\n{{$json.candidate_required_location}}\n\nDescription:\n{{$json.description}}\n\nRules:\n\n1. Reject jobs requiring French, German, Spanish, Japanese, Korean, Mandarin, or any language other than English.\n2. Reject senior, lead, principal, staff, manager, director roles.\n3. Reject jobs requiring 3+ years experience.\n4. Prefer internships, trainee, associate, junior, graduate, entry-level, fresher roles.\n5. Prefer remote jobs open to India or worldwide.\n6. Give higher scores to AI, Data Analyst, Machine Learning, Python Developer, AI Agent, Automation, Business Intelligence, Data Science roles.\n7. If the job is not suitable for an Indian fresher, set apply = \"no\".\n\nReturn ONLY valid JSON:\n\n{\n  \"job_title\": \"\",\n  \"company_name\": \"\",\n  \"match_score\": 0,\n  \"apply\": \"yes\",\n  \"reason\": \"\"\n}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1024,
+        432
+      ],
+      "id": "4b0cbd64-1bc5-4f01-986e-0f0e44d3ed68",
+      "name": "AI Agent",
+      "alwaysOutputData": false,
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "maxItems": 5
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        640,
+        160
+      ],
+      "id": "aac6cb4c-78ca-48f4-abb8-26f92b8183de",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "model": "qwen3:4b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        1056,
+        256
+      ],
+      "id": "377c5181-f037-4656-ba57-73e71bd0a3c9",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "LOflmtIGz0RniYxe",
+          "name": "Ollama account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "console.log(items);\nreturn items;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1376,
+        32
+      ],
+      "id": "93889c81-87fb-4227-8be0-90fe9d8b0e1a",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.filter(item => {\n  const title = (item.json.title || \"\").toLowerCase();\n  const location = (item.json.candidate_required_location || \"\").toLowerCase();\n\n  const blocked = [\n    \"french\",\n    \"german\",\n    \"spanish\",\n    \"japanese\",\n    \"korean\",\n    \"mandarin\",\n    \"senior\",\n    \"staff\",\n    \"principal\",\n    \"director\",\n    \"manager\",\n    \"lead\"\n  ];\n\n  if (blocked.some(word => title.includes(word))) {\n    return false;\n  }\n\n  if (\n    location &&\n    !location.includes(\"worldwide\") &&\n    !location.includes(\"india\") &&\n    !location.includes(\"anywhere\")\n  ) {\n    return false;\n  }\n\n  return true;\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        0
+      ],
+      "id": "bc550f9a-4dfe-43f0-a75b-597c74b4989d",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"job_title\": \"{{$json.title}}\",\n  \"company_name\": \"{{$json.company_name}}\",\n  \"score\": \"{{$json.match_score}}\",\n  \"apply_link\": \"{{$json.url}}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1584,
+        -144
+      ],
+      "id": "47bd91fd-4c2d-4b82-a680-db7beadcb8b2",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "430287b8-e5bf-447f-9ef4-eae1dd7d8f78",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "647fba5869db840592e01ff4797c5f760d0873173243e86d4ef5792229554728"
+  },
+  "id": "PdPRYQcEG0w3OrHt",
+  "tags": []
+}
